@@ -56,9 +56,6 @@
         .top-action-bar {
             text-align: right;
             margin-bottom: 15px;
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
         }
 
         .header {
@@ -116,20 +113,8 @@
             padding: 5px 14px;
             font-size: 20px;
             font-weight: 900;
-            margin-bottom: 8px;
             background: #f8f9fa;
             border-radius: 4px;
-        }
-
-        .invoice-number-box {
-            font-size: 14px;
-            font-weight: 600;
-            color: #555;
-        }
-
-        .invoice-number-box span {
-            font-weight: 800;
-            color: #e74c3c;
         }
 
         .meta-info {
@@ -375,17 +360,10 @@
         }
 
         .btn-new {
-            background: #7f8c8d;
+            background: #2980b9;
         }
         .btn-new:hover {
-            background: #626567;
-        }
-
-        .btn-save-next {
-            background: #27ae60;
-        }
-        .btn-save-next:hover {
-            background: #219653;
+            background: #1f618d;
         }
 
         .bottom-action-bar {
@@ -430,8 +408,7 @@
 
 <div class="container" id="presupuestoContainer">
     <div class="top-action-bar">
-        <button class="btn-action btn-new" onclick="limpiarFormulario()">Limpiar Formulario</button>
-        <button class="btn-action btn-save-next" onclick="guardarYpasarSiguiente()">✔ Guardar y Pasar al Siguiente N°</button>
+        <button class="btn-action btn-new" onclick="limpiarFormulario()">+ Limpiar / Nuevo</button>
     </div>
 
     <!-- Marca de agua posicionada -->
@@ -449,9 +426,6 @@
         </div>
         <div class="invoice-details">
             <div class="invoice-type">X</div>
-            <div class="invoice-number-box">
-                Presupuesto N°: <span id="numeroPresupuesto">Cargando...</span>
-            </div>
         </div>
     </div>
 
@@ -543,101 +517,29 @@
     <button class="btn-action" onclick="window.print()">Imprimir / Guardar PDF</button>
 </div>
 
-<!-- SDKs de Firebase (Modular v10) -->
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-        apiKey: "TU_API_KEY",
-        authDomain: "tu-proyecto.firebaseapp.com",
-        projectId: "tu-proyecto",
-        storageBucket: "tu-proyecto.appspot.com",
-        messagingSenderId: "TU_MESSAGING_SENDER_ID",
-        appId: "TU_APP_ID"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    let numeroActual = 1;
-
-    async function obtenerContadorInicial() {
-        try {
-            const ref = doc(db, "configuracion", "contador");
-            const snap = await getDoc(ref);
-            if (snap.exists()) {
-                numeroActual = snap.data().ultimoNumero || 1;
-            } else {
-                await setDoc(ref, { ultimoNumero: 1 });
-                numeroActual = 1;
-            }
-            actualizarNumeroDisplay();
-        } catch (error) {
-            console.error("Error al conectar con Firebase:", error);
-            numeroActual = 1;
-            actualizarNumeroDisplay();
-        }
-    }
-
-    window.actualizarNumeroDisplay = function() {
-        document.getElementById('numeroPresupuesto').innerText = String(numeroActual).padStart(4, '0');
-    }
-
-    window.limpiarFormulario = function() {
-        if (confirm("¿Deseas limpiar el formulario actual sin cambiar el número?")) {
-            resetearCamposVisuales();
-        }
-    }
-
-    window.guardarYpasarSiguiente = async function() {
-        if (confirm("¿Confirmas guardar este presupuesto e incrementar al siguiente número en la nube?")) {
-            try {
-                const ref = doc(db, "configuracion", "contador");
-                // Incrementa de forma segura en Firebase
-                await updateDoc(ref, {
-                    ultimoNumero: increment(1)
-                });
-                
-                // Obtenemos el nuevo valor actualizado de la nube
-                const snap = await getDoc(ref);
-                numeroActual = snap.data().ultimoNumero;
-                actualizarNumeroDisplay();
-                
-                // Limpiamos la pantalla para el siguiente
-                resetearCamposVisuales();
-                alert("¡Presupuesto guardado y contador actualizado con éxito!");
-            } catch (error) {
-                console.error("Error al actualizar en Firebase:", error);
-                alert("Hubo un error al actualizar en la nube. Verificá tu conexión.");
-            }
-        }
-    }
-
-    function resetearCamposVisuales() {
-        document.getElementById('nombreCliente').value = '';
-        document.getElementById('direccionCliente').value = '';
-        document.getElementById('fechaPresupuesto').valueAsDate = new Date();
-        document.getElementById('notasPresupuesto').innerText = '';
-        
-        const tbody = document.getElementById('itemsTable');
-        tbody.innerHTML = `
-            <tr>
-                <td class="col-cant"><input type="number" value="1" min="1" oninput="calcularTotales()"></td>
-                <td class="col-desc"><div class="editable-desc" contenteditable="true" data-placeholder="Detalle del producto o servicio..."></div></td>
-                <td class="col-precio"><input type="number" value="0.00" step="0.01" min="0" oninput="calcularTotales()"></td>
-                <td class="col-sub" style="text-align: right; padding-right: 15px;"><span class="sub-text">$0.00</span></td>
-                <td class="col-accion"><button class="btn-delete" onclick="eliminarFila(this)">X</button></td>
-            </tr>
-        `;
-        calcularTotales();
-    }
-
-    obtenerContadorInicial();
-</script>
-
 <script>
     document.getElementById('fechaPresupuesto').valueAsDate = new Date();
+
+    function limpiarFormulario() {
+        if (confirm("¿Deseas limpiar el formulario para iniciar uno nuevo?")) {
+            document.getElementById('nombreCliente').value = '';
+            document.getElementById('direccionCliente').value = '';
+            document.getElementById('fechaPresupuesto').valueAsDate = new Date();
+            document.getElementById('notasPresupuesto').innerText = '';
+            
+            const tbody = document.getElementById('itemsTable');
+            tbody.innerHTML = `
+                <tr>
+                    <td class="col-cant"><input type="number" value="1" min="1" oninput="calcularTotales()"></td>
+                    <td class="col-desc"><div class="editable-desc" contenteditable="true" data-placeholder="Detalle del producto o servicio..."></div></td>
+                    <td class="col-precio"><input type="number" value="0.00" step="0.01" min="0" oninput="calcularTotales()"></td>
+                    <td class="col-sub" style="text-align: right; padding-right: 15px;"><span class="sub-text">$0.00</span></td>
+                    <td class="col-accion"><button class="btn-delete" onclick="eliminarFila(this)">X</button></td>
+                </tr>
+            `;
+            calcularTotales();
+        }
+    }
 
     function agregarFila() {
         const tbody = document.getElementById('itemsTable');
