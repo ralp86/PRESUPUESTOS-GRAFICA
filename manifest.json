@@ -1,0 +1,14 @@
+{
+  "background_color": "#0e89f6",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "Presupuestos",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "PRESUPUESTOS",
+  "start_url": "/",
+  "theme_color": "#fffbfb",
+  "id": "com.planetadiseno.presupuestos",
+  "description": "Sistema de generación de presupuestos para Planeta Diseño",
+  "lang": "es"
+}
