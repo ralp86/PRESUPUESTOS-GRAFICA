@@ -439,7 +439,7 @@
         <div class="invoice-details">
             <div class="invoice-type">X</div>
             <div class="invoice-number-box">
-                Presupuesto N°: <span id="numeroPresupuesto">0001</span>
+                Presupuesto N°: <span id="numeroPresupuesto">Cargando...</span>
             </div>
         </div>
     </div>
@@ -532,20 +532,74 @@
     <button class="btn-action" onclick="window.print()">Imprimir / Guardar PDF</button>
 </div>
 
-<script>
-    document.getElementById('fechaPresupuesto').valueAsDate = new Date();
+<!-- SDKs de Firebase (Modular v10) -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    let numeroActual = localStorage.getItem('planeta_presupuesto_num');
-    if (!numeroActual) {
-        numeroActual = 1;
-    } else {
-        numeroActual = parseInt(numeroActual);
+    const firebaseConfig = {
+        apiKey: "TU_API_KEY",
+        authDomain: "tu-proyecto.firebaseapp.com",
+        projectId: "tu-proyecto",
+        storageBucket: "tu-proyecto.appspot.com",
+        messagingSenderId: "TU_MESSAGING_SENDER_ID",
+        appId: "TU_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let numeroActual = 1;
+
+    async function obtenerContadorInicial() {
+        try {
+            const ref = doc(db, "configuracion", "contador");
+            const snap = await getDoc(ref);
+            if (snap.exists()) {
+                numeroActual = snap.data().ultimoNumero || 1;
+            } else {
+                await setDoc(ref, { ultimoNumero: 1 });
+                numeroActual = 1;
+            }
+            actualizarNumeroDisplay();
+        } catch (error) {
+            console.error("Error al conectar con Firebase:", error);
+            numeroActual = 1;
+            actualizarNumeroDisplay();
+        }
     }
-    actualizarNumeroDisplay();
 
-    function actualizarNumeroDisplay() {
+    window.actualizarNumeroDisplay = function() {
         document.getElementById('numeroPresupuesto').innerText = String(numeroActual).padStart(4, '0');
     }
+
+    window.nuevoPresupuesto = function() {
+        if (confirm("¿Deseas limpiar el formulario para iniciar un nuevo presupuesto?")) {
+            // Limpia campos sin alterar el número de la base de datos
+            document.getElementById('nombreCliente').value = '';
+            document.getElementById('direccionCliente').value = '';
+            document.getElementById('fechaPresupuesto').valueAsDate = new Date();
+            document.getElementById('notasPresupuesto').innerText = '';
+            
+            const tbody = document.getElementById('itemsTable');
+            tbody.innerHTML = `
+                <tr>
+                    <td class="col-cant"><input type="number" value="1" min="1" oninput="calcularTotales()"></td>
+                    <td class="col-desc"><div class="editable-desc" contenteditable="true" data-placeholder="Detalle del producto o servicio..."></div></td>
+                    <td class="col-precio"><input type="number" value="0.00" step="0.01" min="0" oninput="calcularTotales()"></td>
+                    <td class="col-sub" style="text-align: right; padding-right: 15px;"><span class="sub-text">$0.00</span></td>
+                    <td class="col-accion"><button class="btn-delete" onclick="eliminarFila(this)">X</button></td>
+                </tr>
+            `;
+            calcularTotales();
+        }
+    }
+
+    obtenerContadorInicial();
+</script>
+
+<script>
+    document.getElementById('fechaPresupuesto').valueAsDate = new Date();
 
     function agregarFila() {
         const tbody = document.getElementById('itemsTable');
@@ -589,31 +643,6 @@
 
         document.getElementById('lblSubtotal').innerText = '$' + subtotalGeneral.toFixed(2);
         document.getElementById('lblTotal').innerText = '$' + subtotalGeneral.toFixed(2);
-    }
-
-    function nuevoPresupuesto() {
-        if (confirm("¿Deseas iniciar un nuevo presupuesto? Se incrementará el número de comprobante.")) {
-            numeroActual++;
-            localStorage.setItem('planeta_presupuesto_num', numeroActual);
-            actualizarNumeroDisplay();
-            
-            document.getElementById('nombreCliente').value = '';
-            document.getElementById('direccionCliente').value = '';
-            document.getElementById('fechaPresupuesto').valueAsDate = new Date();
-            document.getElementById('notasPresupuesto').innerText = '';
-            
-            const tbody = document.getElementById('itemsTable');
-            tbody.innerHTML = `
-                <tr>
-                    <td class="col-cant"><input type="number" value="1" min="1" oninput="calcularTotales()"></td>
-                    <td class="col-desc"><div class="editable-desc" contenteditable="true" data-placeholder="Detalle del producto o servicio..."></div></td>
-                    <td class="col-precio"><input type="number" value="0.00" step="0.01" min="0" oninput="calcularTotales()"></td>
-                    <td class="col-sub" style="text-align: right; padding-right: 15px;"><span class="sub-text">$0.00</span></td>
-                    <td class="col-accion"><button class="btn-delete" onclick="eliminarFila(this)">X</button></td>
-                </tr>
-            `;
-            calcularTotales();
-        }
     }
 </script>
 
